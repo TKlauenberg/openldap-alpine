@@ -1,0 +1,78 @@
+dn: cn=config
+objectClass: olcGlobal
+cn: config
+olcPidFile: /run/openldap/slapd.pid
+olcArgsFile: /run/openldap/slapd.args
+olcDisallows: bind_anon
+
+dn: cn=module,cn=config
+objectClass: olcModuleList
+cn: module
+olcModulepath:  /usr/lib/openldap
+olcModuleload:  back_mdb.so
+olcModuleLoad: memberof
+
+dn: cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: schema
+
+include: file:///etc/openldap/schema/core.ldif
+include: file:///etc/openldap/schema/cosine.ldif
+include: file:///etc/openldap/schema/inetorgperson.ldif
+include: file:///etc/openldap/schema/nis.ldif
+
+# Frontend settings
+dn: olcDatabase=frontend,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olcFrontendConfig
+olcDatabase: frontend
+olcAccess: to dn.base="" by * read
+olcAccess: to dn.base="cn=Subschema" by * read
+olcAccess: to *
+  by self write
+  by users read
+  by anonymous auth
+olcRequires: authc
+
+# Config Settings
+dn: olcDatabase=config,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: config
+olcRootPW: ${CONFIG_PASS_ENC}
+olcAccess: to *
+  by dn.exact="gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth" manage by break
+  by * break
+
+dn: olcDatabase=mdb,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olcMdbConfig
+olcDatabase: mdb
+olcSuffix: ${BASE_DN}
+OlcDbMaxSize: 1073741824
+olcDbDirectory: ${DB_PATH}
+olcRootDN: cn=admin,${BASE_DN}
+olcRootPW: ${ADMIN_PASS_ENC}
+olcDbIndex: uid eq
+olcDbIndex: objectClass eq
+olcDbIndex: mail eq
+
+
+
+# dn: olcDatabase=Monitor,cn=config
+# objectClass: olcDatabaseConfig
+# objectClass: olcMonitorConfig
+# olcDatabase: Monitor
+# olcAccess: to dn.subtree="cn=Monitor" by dn.exact="cn=admin,${BASE_DN}" write by users read by * none
+
+# dn: cn=openssh-lpk,cn=schema,cn=config
+# objectClass: olcSchemaConfig
+# cn: openssh-lpk
+# olcAttributeTypes: ( 1.3.6.1.4.1.24552.500.1.1.1.13 NAME 'sshPublicKey'
+#     DESC 'MANDATORY: OpenSSH Public key'
+#     EQUALITY octetStringMatch
+#     SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )
+# olcObjectClasses: ( 1.3.6.1.4.1.24552.500.1.1.2.0 NAME 'ldapPublicKey' SUP top AUXILIARY
+#     DESC 'MANDATORY: OpenSSH LPK objectclass'
+#     MAY ( sshPublicKey $ uid )
+#     )
+

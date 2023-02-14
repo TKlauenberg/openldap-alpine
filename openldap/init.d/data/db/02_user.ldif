@@ -1,0 +1,13 @@
+dn: cn=tobi+sn=klauenberg,ou=users,dc=thetobis,dc=com
+changetype: add
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: Tobias
+cn: tobi
+sn: Klauenberg
+uid: tobi
+userPassword: {CRYPT}$6$kQTyJ29h$nbdXG3eEwMQ4RXbd5XsfW/L0rHnpy92SXgi.PWZy0jv
+ pCrLumj9wYKc0XX45zFWkp6dGDbFJhBOHZ9bU7YtiF1
+

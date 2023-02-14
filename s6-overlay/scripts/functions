@@ -1,0 +1,77 @@
+#!/command/with-contenv bash
+
+init_settings_db() {
+  log-helper debug "init_settings_db"
+  log-helper info "Create config db"
+  set -e
+  set -o pipefail
+
+  get_ldap_base_dn
+
+  log-helper debug "base dn = $BASE_DN"
+  # TODO read passwords with files?
+  export ADMIN_PASS_ENC="$(slappasswd -s ${ADMIN_PASS})"
+  export CONFIG_PASS_ENC="$(slappasswd -s ${CONFIG_PASS})"
+  cat /var/openldap/init.d/data/slap.d/00-base.ldif | envsubst > /tmp/slapd.ldif
+  log-helper debug "configpath = ${CONFIG_PATH}slapd.d"
+  slapadd -n 0 -F ${CONFIG_PATH}slap.d -l /tmp/slapd.ldif
+}
+
+init_backend_db() {
+  log-helper debug "init_backend_db"
+  silent slapd -h "ldap://$HOSTNAME ldapi:///" -u ldap -g ldap -d 256 &
+  sleep 2.0
+  log-helper debug "Waiting for OpenLDAP to be ready"
+  until ldapsearch -Y EXTERNAL -Q -H ldapi:/// -s base \& > /dev/null ; do sleep 1.0; done
+  ldap_add_or_modify "/var/openldap/init.d/data/slap.d/03-memberOf.ldif"
+
+  # for f in $(find /assets/slapd/config/bootstrap/ldif -mindepth 1 -maxdepth 1 -type f -name \*.ldif | sort); do
+  #   print_debug "Bootstrap LDIF: Processing file ${f}"
+  #   ldap_add_or_modify "$f"
+  # done
+}
+
+
+function get_ldap_base_dn() {
+  if [ -z "$BASE_DN" ]; then
+    IFS='.' read -ra BASE_DN_TABLE <<< "${DOMAIN}"
+    for i in "${BASE_DN_TABLE[@]}"; do
+      EXT="dc=$i,"
+      BASE_DN=$BASE_DN$EXT
+    done
+
+    IFS='.' read -a domain_elems <<< "${DOMAIN}"
+    SUFFIX=""
+    ROOT=""
+
+    for elem in "${domain_elems[@]}" ; do
+        if [ "x${SUFFIX}" = x ] ; then
+            SUFFIX="dc=${elem}"
+            ROOT="${elem}"
+        fi
+    done
+
+    export BASE_DN=${BASE_DN::-1}
+  fi
+}
+
+# base functions
+silent() {
+    ## Quiet down output
+    if [ "${DEBUG_MODE}" = "true" ] || [ "${SHOW_OUTPUT,,}" = "true" ] || [ "${CONTAINER_LOG_LEVEL,,}" = "debug" ] ;  then
+        "$@"
+    else
+        "$@" > /dev/null 2>&1
+    fi
+}
+
+function ldap_add_or_modify() {
+  local ldif_file=$1
+  sed -i "s|<BASE_DN>|${BASE_DN}|g" $ldif_file
+  sed -i "s|<BACKEND>|${BACKEND}|g" $ldif_file
+  if grep -iq changetype $ldif_file; then
+    silent ldapmodify -Y EXTERNAL -Q -H ldapi:/// -f $ldif_file
+  else
+    silent ldapadd -Y EXTERNAL -Q -H ldapi:/// -f $ldif_file
+  fi
+}

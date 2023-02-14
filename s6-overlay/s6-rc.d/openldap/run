@@ -1,0 +1,3 @@
+#!/command/with-contenv sh
+# slapd -h $SLAPD_HOSTS -F $SLAPD_CONF_DIR -u ldap -g ldap -d $CONTAINER_LOG_LEVEL >> /dev/stdout 2>&1
+while true; do echo "test"; sleep 200000; done

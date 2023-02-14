@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # docker entrypoint script
 # configures and starts LDAP
 
@@ -25,12 +25,13 @@ SLAPD_CONF_DIR="/etc/openldap/slapd.d"
 chown -R ldap:ldap /var/lib/openldap/openldap-data
 chmod -R 750 /var/lib/openldap/openldap-data
 
-slapd -h "ldap:///" -F ${SLAPD_CONF_DIR} -u ldap -g ldap > /stdout.txt 2> /stderr.txt
+slapd -h "ldap:///" -F ${SLAPD_CONF_DIR} -u ldap -g ldap -d 256 >> /dev/stdout 2>&1
 
-
-while [ ! -e /run/slapd/slapd.pid ]; do sleep 0.1; done
+log-helper trace "test"
+while [ ! -e /run/openldap/slapd.pid ]; do sleep 0.1; done
 pid="$(cat /run/openldap/slapd.pid)"
 
+log-helper info "PID: ${pid}"
 # wait forever
 while true
 do

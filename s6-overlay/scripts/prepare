@@ -1,0 +1,11 @@
+#!/command/with-contenv bash
+source /var/openldap/env/00_defaults
+if [ -e "$init_done" ] ; then
+  log-helper debug "init is already done"
+  exit 0
+fi
+log-helper debug "initialize"
+
+source /etc/s6-overlay/scripts/functions
+init_settings_db
+init_backend_db

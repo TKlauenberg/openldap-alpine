@@ -1,0 +1,19 @@
+dn: ou=gitea,ou=applications,dc=thetobis,dc=com
+changetype: add
+objectClass: organizationalUnit
+ou: gitea
+
+dn: cn=user,ou=gitea,ou=applications,dc=thetobis,dc=com
+changetype: add
+objectClass: top
+objectClass: groupOfUniqueNames
+cn: user
+uniqueMember: cn=tobi+sn=klauenberg,ou=users,dc=thetobis,dc=com
+
+dn: cn=admins,ou=gitea,ou=applications,dc=thetobis,dc=com
+changetype: add
+objectClass: top
+objectClass: groupOfUniqueNames
+cn: admins
+uniqueMember: cn=tobi+sn=klauenberg,ou=users,dc=thetobis,dc=com
+

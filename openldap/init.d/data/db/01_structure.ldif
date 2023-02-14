@@ -1,0 +1,15 @@
+dn: dc=thetobis,dc=com
+changetype: add
+objectClass: dcObject
+objectClass: organization
+o: %ORGANISATION_NAME%
+
+dn: ou=users,dc=thetobis,dc=com
+changetype: add
+objectClass: organizationalUnit
+ou: users
+
+dn: ou=applications,dc=thetobis,dc=com
+changetype: add
+objectClass: organizationalUnit
+ou: applications
