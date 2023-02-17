@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # docker entrypoint script
 # configures and starts LDAP
 
@@ -11,6 +11,7 @@ ulimit -n 1024
 
 # SIGTERM-handler
 term_handler() {
+  pid=$(cat /var/run/slapd/slapd.pid)
   if [ $pid -ne 0 ]; then
     kill -SIGTERM "$pid"
     wait "$pid"
@@ -20,19 +21,33 @@ term_handler() {
 
 trap 'kill ${!}; term_handler' SIGTERM
 
-SLAPD_CONF_DIR="/etc/openldap/slapd.d"
-
-chown -R ldap:ldap /var/lib/openldap/openldap-data
-chmod -R 750 /var/lib/openldap/openldap-data
-
-slapd -h "ldap:///" -F ${SLAPD_CONF_DIR} -u ldap -g ldap > /stdout.txt 2> /stderr.txt
-
-
-while [ ! -e /run/slapd/slapd.pid ]; do sleep 0.1; done
-pid="$(cat /run/openldap/slapd.pid)"
-
-# wait forever
-while true
-do
-  tail -f /dev/null & wait ${!}
+for f in $(find /base -mindepth 1 -maxdepth 1 -type f | sort); do
+  log-helper debug "source file $f"
+  source "$f"
 done
+for f in $(find /custom/env -mindepth 1 -maxdepth 1 -type f -name \*.sh | sort); do
+  log-helper debug "source file $f"
+  source "$f"
+done
+
+if [ -e "$init_done" ] ; then
+  log-helper debug "init is already done"
+else
+  log-helper debug "initialize"
+
+  # Add openldap user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
+  # If explicit uid or gid is given, use it.
+  addgroup -g ${LDAP_OPENLDAP_GID} ldap && \
+  adduser --disabled-password -G ldap -u ${LDAP_OPENLDAP_UID} ldap
+
+  init_settings_db
+  create_folder_structure
+  init_backend_db
+  touch $init_done
+fi
+
+
+
+# ------------------------old
+
+slapd -h "ldap:///" -F $CONFIG_PATH -u ldap -g ldap -d 256 >> /dev/stdout 2>&1

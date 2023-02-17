@@ -1,0 +1,15 @@
+dn: ${BASE_DN}
+changetype: add
+objectClass: dcObject
+objectClass: organization
+o: ${DOMAIN}
+
+dn: ou=users,${BASE_DN}
+changetype: add
+objectClass: organizationalUnit
+ou: users
+
+dn: ou=applications,${BASE_DN}
+changetype: add
+objectClass: organizationalUnit
+ou: applications
